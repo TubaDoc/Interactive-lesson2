@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 17 — Bluegrass</title>
+<style>
+  :root{--bg:#0e0f12;--ink:#e8ebf0;--muted:#b6bdc9;--card:#161821;--line:#262a35;--brand:#59d0ff;--accent:#ffd166}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 'Segoe UI',system-ui,Roboto,sans-serif}
+  body.modal-open{overflow:hidden}
+  /* Hide main content until the app is ready */
+  header.top, #main-content, #qna-fab {display: none;}
+  .app{max-width:980px;margin:0 auto;padding:1rem}
+
+  .slide{display:none;background:var(--card);border:1px solid var(--line);border-radius:.6rem;padding:1rem;margin:1rem 0}
+  .slide:first-of-type{display:block}
+  .slide-head{display:flex;align-items:baseline;justify-content:space-between;gap:.75rem;border-bottom:1px solid var(--line);padding-bottom:.4rem;margin-bottom:.6rem}
+  .slide h2{margin:.2rem 0;font-size:1.4rem}
+  .meter{color:var(--muted);font-size:.9rem}
+  .bullets{margin:.6rem 0 1rem 1.1rem}
+  .bullets li{margin:.35rem 0}
+  .read-btn,.nav-btn,.home-btn,.grade-btn{background:linear-gradient(90deg,var(--brand),#86e3ff);color:#08121f;border:0;font-weight:700;padding:.5rem .85rem;border-radius:.45rem;cursor:pointer}
+  .read-btn{background:#233046;color:var(--ink);border:1px solid var(--line)}
+  .full{margin:.75rem 0 .5rem 0;line-height:1.75;color:#d9e1ee}
+
+  .deep-list{display:flex;flex-direction:column;align-items:center;gap:.6rem;margin:1rem 0;list-style:none;padding:0}
+  .deep-item{width:100%;display:flex;justify-content:center}
+  .profile-btn{background:linear-gradient(90deg,var(--accent),#ffe08a);color:#08121f;border:0;font-weight:800;padding:.55rem 1rem;border-radius:.55rem;cursor:pointer;min-width:min(520px,90%);text-align:center}
+  .profile-btn:hover{filter:brightness(.97)}
+  .profile-btn:focus{outline:2px solid #ffd16666;outline-offset:2px}
+
+  .slide-nav{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-top:1rem;gap:.5rem}
+  .home-btn{justify-self:center;background:#334055;color:var(--ink);border:1px solid var(--line)}
+
+  .quiz-battle-container{display:flex;gap:1.5rem;align-items:flex-start}
+  .quiz-main{flex:1 1 60%}
+  .leaderboard{flex:1 1 35%;background:#131622;border-radius:.45rem;padding:1rem;border:1px solid var(--line)}
+  .leaderboard-list li{display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--line);align-items:center}
+  .leaderboard-list li:last-child{border-bottom:0}
+  .leaderboard-list .player-name{font-size:.9em;color:var(--muted)}
+  .leaderboard-list .correct-answers{font-size:.9em}
+  .leaderboard-list .score{font-weight:700;color:var(--brand);font-size:1.1em}
+  .quiz-question-area .q{padding:.6rem;border-bottom:1px dashed var(--line)}
+  .quiz-question-area .q:last-child{border-bottom:0}
+  .choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.35rem;margin-top:.35rem}
+  .choice-btn{display:flex;gap:.5rem;align-items:center;padding:.35rem .5rem;border-radius:.35rem;background:#131622;border:1px solid var(--line);color:var(--ink);font-size:1rem;width:100%;text-align:left;cursor:pointer}
+  .choice-btn.correct{border-color:rgba(6,214,160,.6);background:rgba(6,214,160,.08)}
+  .choice-btn.incorrect{border-color:rgba(239,71,111,.6);background:rgba(239,71,111,.07)}
+  .choice-btn:disabled{cursor:not-allowed;opacity:.7}
+  .quiz-controls button{margin-top:1rem}
+  #quiz-feedback{margin-top:1rem;font-weight:700}
+  #quiz-timer{font-size:1.8rem;font-weight:700;color:var(--accent);text-align:center;margin-bottom:1rem;padding:.5rem;background-color:rgba(255,209,102,.1);border-radius:.45rem}
+
+  #scrim{position:fixed;inset:0;display:none;background:rgba(0,0,0,.78);z-index:9998}
+  #scrim.active{display:block}
+  #modal{position:fixed;inset:0;display:none;place-items:center;z-index:9999;padding:1rem}
+  #modal.active{display:grid}
+  .modal-card{max-width:1100px;width:90%;background:#0f1420;border:1px solid var(--line);border-radius:.75rem;box-shadow:0 18px 60px rgba(0,0,0,.5);transform:scale(.97);opacity:0;transition:transform .2s ease,opacity .2s ease;max-height:85vh;display:flex;flex-direction:column}
+  #modal.active .modal-card{transform:scale(1);opacity:1}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.2rem;border-bottom:1px solid var(--line)}
+  .modal-head h3{margin:0;font-size:1.5rem}
+  .modal-body{padding:1.2rem;line-height:1.85;font-size:18px;overflow-y:auto}
+  .modal-body img{max-width:100%;height:auto;border-radius:.4rem;border:1px solid var(--line);margin:.6rem 0}
+  .modal-body.split-layout{display:flex;gap:1.5rem;align-items:flex-start}
+  .modal-body.split-layout > .modal-image-container{flex:0 0 300px;min-width:200px}
+  .modal-body.split-layout img{margin:0;width:100%}
+  .modal-body.split-layout > .modal-text-container{flex:1 1 auto}
+  .modal-body h4{margin:1rem 0 .4rem;font-size:1rem;color:#ffe08a}
+  .close{background:#2a3649;color:#e3eaf5;border:1px solid var(--line);padding:.4rem .8rem;border-radius:.45rem;cursor:pointer}
+
+  .interactive-section{margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--line)}
+  .interactive-section h3{color:var(--accent);margin-bottom:1rem}
+
+  .poll-option{position:relative;margin-bottom:.5rem;background:#131622;border-radius:.35rem;border:1px solid var(--line);overflow:hidden}
+  .poll-option button{width:100%;text-align:left;padding:.5rem .8rem;background:0 0;border:0;color:var(--ink);cursor:pointer;position:relative;z-index:2}
+  .poll-option button:disabled{cursor:not-allowed}
+  .poll-option.voted-for button{font-weight:700}
+  .poll-bar{position:absolute;top:0;left:0;height:100%;background:var(--brand);opacity:.2;transition:width .3s ease;z-index:1}
+  .poll-percent{position:absolute;right:.8rem;top:50%;transform:translateY(-50%);font-size:.9em;font-weight:700;color:var(--ink);z-index:2}
+
+  .build-a-band{display:flex;gap:1rem;flex-wrap:wrap}
+  .instrument-pool,.band-area{flex:1;min-width:250px;padding:1rem;border:2px dashed var(--line);border-radius:.6rem}
+  .band-area{background:rgba(89,208,255,.05)}
+  .instrument{padding:.5rem .8rem;background:var(--card);border:1px solid var(--line);border-radius:.4rem;cursor:grab;margin-bottom:.5rem;user-select:none}
+  .instrument:active{cursor:grabbing;background:#262a35}
+  .band-area.drag-over{border-color:var(--brand)}
+  .band-area .instrument.correct{border-left:4px solid #06d6a0}
+  .band-area .instrument.incorrect{border-left:4px solid #ef476f}
+
+  .word-cloud-container{display:flex;gap:1rem;flex-wrap:wrap}
+  .word-cloud-input{flex:1;min-width:250px}
+  .word-cloud-display{flex:2;min-width:300px;min-height:200px;border:1px solid var(--line);border-radius:.6rem;padding:1rem;display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;justify-content:center}
+  .word-cloud-display span{padding:.1rem .3rem}
+  .content-input-container{display:flex;gap:.5rem;margin-bottom:1rem}
+  .content-input{flex-grow:1;background:#131622;border:1px solid var(--line);color:var(--ink);padding:.5rem .8rem;border-radius:.45rem;font-size:1rem}
+  .add-content-btn{background:linear-gradient(90deg,var(--accent),#ffe08a);color:#08121f;border:0;font-weight:700;padding:.5rem 1rem;border-radius:.45rem;cursor:pointer}
+  
+  #qna-fab{position:fixed;bottom:1rem;right:1rem;z-index:100}
+  #qna-panel{position:fixed;top:0;right:0;width:min(450px, 100%);height:100%;background:var(--card);border-left:1px solid var(--line);z-index:10001;transform:translateX(100%);transition:transform .3s ease}
+  #qna-panel.active{transform:translateX(0)}
+  .qna-head{display:flex;justify-content:space-between;align-items:center;padding:.8rem 1rem;border-bottom:1px solid var(--line)}
+  .qna-body{padding:1rem;height:calc(100% - 120px);overflow-y:auto}
+  .qna-footer{padding:1rem;border-top:1px solid var(--line)}
+  .qna-list li{display:flex;gap:.8rem;align-items:flex-start;padding:.8rem 0;border-bottom:1px solid var(--line)}
+  .qna-list li:last-child{border-bottom:0}
+  .upvote-btn{display:flex;flex-direction:column;align-items:center;background:0 0;border:1px solid var(--line);color:var(--ink);border-radius:.4rem;padding:.3rem;cursor:pointer}
+  .upvote-btn.voted{background:var(--brand);color:#08121f}
+  .upvote-btn:disabled{cursor:not-allowed}
+
+  .overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.85);z-index:10002;color:var(--ink)}
+  .overlay.hidden{display:none}
+  .overlay-card{background:var(--card);padding:2rem;border-radius:.75rem;width:min(400px, 90%);text-align:center}
+  .overlay-card h3{margin-top:0;font-size:1.5rem;color:var(--accent)}
+  .overlay-card input{width:100%;box-sizing:border-box;margin-bottom:1rem;text-align:center}
+  .overlay-card button{width:100%;margin-bottom:.5rem}
+  .overlay-card hr{border-color:var(--line);margin:1rem 0}
+</style>
+</head>
+<body>
+  <header class="top" id="main-header">
+    <div class="app brand">
+      <h1>Lesson 17: Bluegrass</h1>
+      <small>Use Next/Previous or ← → keys. Session ID: <b id="session-id-display"></b></small>
+    </div>
+  </header>
+  <main class="app" id="main-content">
+    <div id="slides" class="slides" aria-live="polite"></div>
+  </main>
+
+  <div id="scrim" aria-hidden="true"></div>
+  <div id="modal" role="dialog" aria-modal="true" aria-labelledby="m-title" aria-hidden="true">
+    <div class="modal-card" role="document">
+      <div class="modal-head">
+        <h3 id="m-title"></h3>
+        <button class="close" id="modalClose">Close ✕</button>
+      </div>
+      <div id="m-body" class="modal-body"></div>
+    </div>
+  </div>
+  
+  <div id="session-overlay" class="overlay hidden">
+    <div class="overlay-card">
+      <h3>Join a Session</h3>
+      <input type="text" id="session-input" class="content-input" placeholder="ENTER SESSION ID">
+      <button id="join-session-btn" class="read-btn" style="background:var(--brand);color:#08121f">Join</button>
+      <hr>
+      <button id="start-session-btn" class="read-btn" style="background: #06d6a0; color:#08121f">Start a New Session</button>
+    </div>
+  </div>
+
+  <div id="name-entry-overlay" class="overlay hidden">
+    <div class="overlay-card">
+        <h3>Welcome!</h3>
+        <p>Please enter your name to join the session.</p>
+        <input type="text" id="name-input" class="content-input" placeholder="Your Name or Nickname" required>
+        <button id="join-btn" class="add-content-btn">Join</button>
+        <a href="#" id="join-anonymously" style="color: var(--muted); font-size: 0.9em; display:block; margin-top: .5rem">or join anonymously</a>
+    </div>
+  </div>
+
+  <button id="qna-fab" class="profile-btn" onclick="toggleQnaPanel()">? Questions?</button>
+  <div id="qna-panel">
+    <div class="qna-head">
+      <h3>Live Q&A</h3>
+      <button class="close" onclick="toggleQnaPanel()">✕</button>
+    </div>
+    <div class="qna-body">
+      <ul id="qna-list" class="qna-list" style="list-style: none; padding: 0;"><li>No questions yet.</li></ul>
+    </div>
+    <div class="qna-footer">
+      <div class="content-input-container">
+        <input type="text" id="qna-input" class="content-input" placeholder="Ask a question...">
+        <button class="add-content-btn" onclick="submitQuestion()">Ask</button>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  // --- IMPORTS AND CONFIG ---
+  const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "...", authDomain: "...", projectId: "..." };
+  const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+  const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, collection, addDoc, query, onSnapshot, doc, setDoc, getDoc, updateDoc, increment, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  
+  // --- LOCAL STATE ---
+  let userId = null;
+  let localUpvotes = new Set();
+  let userName = null;
+  let sessionId = null;
+  let sessionDataPath = null;
+  let ix = 0; 
+  let slidesEls;
+  
+  // --- LESSON CONTENT ---
+  const SLIDES = [
+    {"id": "17.01", "title": "17.01 Introduction", "bullets": ["Bluegrass emerged as a country subgenre in the 1940s.", "Bill Monroe is considered the 'father of bluegrass.'", "His band, the Blue Grass Boys, launched the careers of Lester Flatt and Earl Scruggs.", "The 1960s folk revival and Hollywood films introduced bluegrass to a new generation."], "full": "In an earlier lesson, we encountered a number of subgenres of country and western music that became popular during the 1940s, such as the country crooner and honky-tonk. In this lesson, we will focus specifically on the genre of bluegrass. Bill Monroe is generally considered to be the father of bluegrass. His band started the careers of two other crucial figures in bluegrass music, Lester Flatt and Earl Scruggs. Bluegrass music had had devoted followers since its earliest days in the 1940s, but during the 1960s, more and more people came to listen to and appreciate the music. The folk revival movement, coupled with mainstream exposure in Hollywood films, introduced a new generation of listeners to bluegrass.", "deep": [
+      {"title": "Lester Flatt (1914-1979)", "summary": "One of the most important early bluegrass guitarists, known for developing the 'G-run' technique.", "bullets": ["Joined Bill Monroe’s Bluegrass Boys in 1945.", "Perfected the 'G-run,' a widely imitated guitar gesture.", "Formed the Foggy Mountain Boys with Earl Scruggs in 1948.", "Co-wrote 'The Ballad of Jed Clampett' for *The Beverly Hillbillies*."], "media": [], "image": "https://i.imgur.com/5hZctOn.png", "modalTitle": "About Lester Flatt", "modalHTML": "<p>One of the most important early bluegrass guitarists, Lester Flatt began playing the instrument at the age of seven. He quit school at the age of twelve and soon after began working at a textile mill in North Carolina. At the same time, Flatt was active in the local music scene, and by the end of the 1930s, he began performing with Clyde Moody. His popularity had grown so that, beginning in 1945, he began to be featured on the Grand Ole Opry. Flatt joined Bill Monroe’s Bluegrass Boys that same year, where he met Earl Scruggs. It was during this time that Flatt perfected a technique that became known as the “G-run,” which has become one of the most widely imitated gestures in bluegrass. Flatt and Scruggs left Monroe’s group in 1948 and began performing together. They recorded “Foggy Mountain Breakdown” (1949), which was featured in the film Bonnie and Clyde (1967), and “The Ballad of Jed Clampett” (1962), which was used as the theme for the television show The Beverly Hillbillies. Lester and Scruggs parted ways in 1969, and Flatt created the group the Nashville Grass, which quickly became a popular act on the blossoming bluegrass scene of the 1970s.</p>"},
+      {"title": "Overview Video", "summary": "Watch this short video to get an overview of Bluegrass music.", "bullets": [], "media": [], "image": "https://i.imgur.com/llUvPmw.png", "modalTitle": "Bluegrass Overview", "modalHTML": "<iframe title=\"vimeo-player\" src=\"https://player.vimeo.com/video/765812618?h=1001836262\" width=\"100%\" height=\"400\" frameborder=\"0\" allowfullscreen></iframe>"}
+    ]},
+    {"id": "17.02", "title": "17.02 The Roots of Bluegrass", "bullets": ["American country music has roots in the music of the British Isles (England, Ireland, Scotland).", "Settlers brought dance music, ballads, and folk songs to the southern U.S. mountains.", "Bluegrass is descended from string bands, which featured fiddle, guitar, and upright bass.", "Gid Tanner and the Skillet Lickers were a prolific early string band, recording 88 sides for Columbia Records."], "full": "American country music has its roots in the music of the British Isles: England, Ireland, and Scotland. In the eighteenth and early nineteenth centuries, settlers from the British Isles—particularly northern Ireland and the Scottish lowlands—settled in the mountainous regions of the southern United States, bringing their musical traditions with them. This includes music for many different types of dances (such as the waltz, reel, jig, and round dance) as well as a number of narrative ballads and other folk songs. This music was often accompanied by fiddle along with guitar, dulcimer, banjo, harmonica, and sometimes piano. By the 1930s, groups playing Southern mountain music could also include other instruments such as the upright bass, the steel guitar, or the autoharp.Bluegrass music is descended from mountain folk music ensembles known as string bands. A string band was a group typically composed of a fiddle, guitar, upright bass, and sometimes a mandolin or banjo.", "deep": [
+      {"title": "Gid Tanner & the Skillet Lickers", "summary": "A remarkably prolific 1920s string band that became a classic example of the tradition.", "bullets": ["Recorded 88 sides for Columbia Records between 1926 and 1931.", "Classic recordings include 'Skillet Licker Breakdown' and 'Down Yonder'."], "media": [{"label": "Listen: 'Skillet Licker Breakdown'", "href": "https://open.spotify.com/track/4ofR53mPqMuZp8zTWZz0oe?si=48f200575e2646f2"}, {"label":"Listen: 'Down Yonder'", "href":"https://open.spotify.com/track/3UYeTr8hsTPi5rfKd7zUsm?si=a277f6d2394e47b8"}, {"label": "More Info", "href": "https://www.georgiaencyclopedia.org/articles/arts-culture/gid-tanner-and-his-skillet-lickers"}], "image": null, "modalTitle": "About the Skillet Lickers", "modalHTML": ""}
+    ], "buildaband": { "correct": ["Fiddle", "Guitar", "Upright Bass", "Mandolin", "Banjo"], "distractors": ["Accordion", "Piano", "Harmonica"] }},
+    {"id": "17.03", "title": "17.03 Bill Monroe and the Birth of Bluegrass", "bullets": ["Born in Kentucky, Monroe was influenced by church music, the blues, and hillbilly music.", "He learned guitar alongside Black musician Arnold Schultz.", "Switched from guitar to mandolin to play with his brothers.", "Formed the Blue Grass Boys and successfully auditioned for the Grand Ole Opry in 1939."], "full": "Bill Monroe was born in Rosine, Kentucky, in 1911... He received equal training and exposure in religious music, the blues, and hillbilly music, which helps to account for his unique approach to performance. At the age of eighteen, he joined his older brothers Birch and Charlie in an oil refinery... Although Monroe had grown up playing the guitar, he switched to the mandolin when he and his brothers formed their band because Birch played the fiddle and Charlie played the guitar... Bill then organized his Blue Grass Boys, recruiting singer and guitarist Cleo Davis, fiddler Art Wooten, and bassist Amos Garren. In 1939, Bill Monroe and the Blue Grass Boys successfully auditioned for a regular spot on the Grand Ole Opry.", "deep": [
+      {"title": "Bill Monroe (1911-1996)", "summary": "Known as 'the father of bluegrass music,' Monroe was a singer and mandolinist from rural Kentucky.", "bullets": ["Learned guitar and mandolin as a child.", "Formed the Blue Grass Boys in 1938.", "His unique style was copied by other groups, who dubbed the genre 'bluegrass.'", "Nearly every significant early bluegrass musician was a member of his band or was influenced by them."], "media": [{"label": "Watch: 'New Mule Skinner Blues'", "href": "https://www.youtube.com/embed/tiRu03RgSWw"}, {"label": "Listen: 'New Mule Skinner Blues'", "href":"https://open.spotify.com/track/3CIoKguwyGbZlcvc4KtlC6?si=b8cd7bfda32b4b97"}], "image": "https://i.imgur.com/q9IVztb.png", "modalTitle": "About Bill Monroe", "modalHTML": "<p>Known as “the father of bluegrass music,” Bill Monroe was born in rural Kentucky in 1911. He came from a musical family: his father was a step-dancer, his mother played the fiddle and sang, and his four siblings all played instruments. He learned guitar and mandolin as a child, and by the age of 12 he began to perform with his uncle Pen Vandiver, an accomplished fiddler, at country barn dances. Bill and two of his brothers moved to East Chicago, Indiana in 1929, where Bill worked at the Sinclair refiner for four years during the Great Depression. In 1932, he began playing barn dances and local radio shows with his brothers, and in 1938 Bill formed the group the Blue Grass Boys. By 1945, the Blue Grass Boys lineup had solidified with Monroe on mandolin, Lester Flatt on guitar, Earl Scruggs on banjo, Chubby Wise on fiddle, and Howard Watts on bass. Their unique style began to be copied by other groups during the late 1940s and 1950s and was dubbed bluegrass. Monroe’s legacy and influence cannot be understated, as nearly every significant early-generation bluegrass musician was either a member of the Blue Grass Boys, played in a group fronted by a former Blue Grass Boy, or in a group that emulated them.</p><p><em>\"I'm a farmer with a mandolin and a high tenor voice.\" -Bill Monroe</em></p>"}
+    ], "poll": {"q": "Which of these instruments is NOT typically found in a traditional string band?", "choices": ["Guitar", "Fiddle", "Harmonica", "Mandolin"], "answer": 2}},
+    {"id": "17.04", "title": "17.04 The Classic Bluegrass Sound", "bullets": ["Earl Scruggs perfected and popularized the 'three-finger' banjo style.", "The quintessential Blue Grass Boys lineup existed from 1945-1948.", "This band featured Monroe (mandolin), Flatt (guitar), Scruggs (banjo), Chubby Wise (fiddle), and Howard Watts/Cedric Rainwater (bass).", "Monroe's original song 'Blue Moon of Kentucky' (1946) became a huge hit."], "full": "Earl Scruggs, born in 1924 in North Carolina, grew up in a family of banjo players. His family played in a special 'three-finger' style... the banjo player has picks on the thumb, index, and middle fingers... The melodies are mixed with harmony and accompaniment, and the banjoist usually delivers the notes very quickly. At this time, the members were Scruggs on banjo, Lester Flatt on guitar, Robert 'Chubby' Wise on fiddle, Cedric Rainwater on bass, and leader Bill Monroe on mandolin. This version of Bill Monroe’s Blue Grass Boys that existed between 1945 and 1948 is generally regarded as the quintessential bluegrass band... The band also recorded 'Blue Moon of Kentucky' in 1946, which was an original composition by Monroe.", "deep": [
+      {"title": "Earl Scruggs (1924-2012)", "summary": "The most influential banjo player in American music, who perfected the three-finger banjo technique.", "bullets": ["Joined the Blue Grass Boys in 1944.", "His style is now often called 'Scruggs style.'", "Co-founded the Foggy Mountain Boys with Lester Flatt.", "Inducted into the Country Music Hall of Fame in 1985."], "media": [{"label": "Watch: Three-Finger Style Explained", "href": "https://www.youtube.com/embed/I4sLuLhW1B8"}], "image": "https://i.imgur.com/d3tauxz.png", "modalTitle": "About Earl Scruggs", "modalHTML": "<p>Earl Scruggs was most influential banjo player not only in bluegrass but in all of American music. Born in rural North Carolina, his father died at the age of four. To help him cope with his father’s passing, Scruggs began to play the banjo. While most players used a two-finger style, Scruggs was the first to perfect and popularize the three-finger banjo technique. He joined Bill Monroe’s Bluegrass Boys in 1944 and formed the Foggy Mountain boys with Lester Flatt in 1948. Together Scruggs and Flatt recorded “Foggy Mountain Breakdown” (1949), which was featured in the film Bonnie and Clyde (1967), and “The Ballad of Jed Clampett” (1962), which was used as the theme for the television show The Beverly Hillbillies. Lester and Scruggs parted ways in 1969, and Scruggs formed the Earl Scruggs Review with his three sons. In an attempt to achieve a more modern style, Scruggs began the electric banjo. Earl Scruggs was inducted into the Country Music Hall of Fame in 1985 and received a star on the Hollywood Walk of Fame in 2003.</p>"},
+      {"title": "Blue Moon of Kentucky", "summary": "Listen to Monroe's hit waltz from 1946, later covered by Elvis Presley.", "bullets": [], "media": [{"label": "Listen on Spotify", "href": "https://open.spotify.com/track/3x95FfMhVfB3ZNIufQ1IF3"}, {"label": "Watch a Live Version", "href": "https://www.youtube.com/embed/4syA9aNnNa0"}, {"label": "More Info", "href": "https://www.netstate.com/states/symb/song/ky_blue_moon_of_ky.htm"}], "image": null, "modalTitle": "About 'Blue Moon of Kentucky'", "modalHTML": ""},
+      {"title": "Featured Recordings (1946)", "summary": "Listen to classic recordings from the quintessential Blue Grass Boys lineup.", "bullets":[],"media":[{"label":"'Will You Be Loving Another Man?'","href":"https://open.spotify.com/track/7HU6nRWKVIzQ7lRLATZWxW?si=31d54903851c4b54"},{"label":"'Blue Yodel No. 4'","href":"https://open.spotify.com/track/2EAICjiavkemcnaSQqCtn0?si=714bc2a161474db8"}]}
+    ], "poll": {"q": "Earl Scruggs's famous banjo-playing style uses how many fingers?", "choices": ["2", "3", "4", "5"], "answer": 1}},
+    {"id": "17.05", "title": "17.05 Bluegrass Takes Off", "bullets": ["Flatt and Scruggs left Monroe in 1948 and formed the Foggy Mountain Boys.", "They recorded bluegrass standards like 'Foggy Mountain Breakdown' and 'Old Salty Dog Blues.'", "A 'breakdown' is an instrumental section of a bluegrass song, often featuring a solo.", "Lester Flatt developed the 'G run' on guitar to catch up with other musicians."], "full": "In 1948, within weeks of each other, Flatt and Scruggs resigned from Bill Monroe's Blue Grass Boys... They teamed up... and they called themselves the Foggy Mountain Boys... In bluegrass, a breakdown refers to an instrumental section of a song... During his time with Bill Monroe's band, he developed a technique that allowed him to catch up with the other musicians. This technique, now called a Lester Flatt G run, was an ascending run that allowed Flatt to reunite with the other musicians on the beat.", "deep": [
+      {"title": "Foggy Mountain Breakdown", "summary": "One of the first and most important singles by the Foggy Mountain Boys, composed by Earl Scruggs.", "bullets": [], "media": [{"label": "Listen to the 1949 Recording", "href": "https://open.spotify.com/track/3qvVal54ezR5FqctiIHPAU"}, {"label": "Watch a Live Performance", "href": "https://www.youtube.com/embed/yQIJuu3N5EY"}], "image": null, "modalTitle": "About 'Foggy Mountain Breakdown'", "modalHTML": ""},
+      {"title": "Lester Flatt G Run", "summary": "An ascending guitar run developed by Flatt, now one of the most widely imitated gestures in bluegrass.", "bullets": [], "media": [{"label": "Watch the G Run Explained", "href": "https://www.youtube.com/embed/n0a3u6YA9hs"}], "image": null, "modalTitle": "About the G Run", "modalHTML": ""},
+      {"title":"Foggy Mountain Boys Essentials", "summary":"Listen to more classic tracks from Flatt & Scruggs.", "bullets":[],"media":[{"label":"'My Little Girl in Tennessee'","href":"https://open.spotify.com/track/6VeWgbaIt3UoejSQgebdFJ?si=50bf9b4e76a54a89"},{"label":"'Old Salty Dog Blues'","href":"https://open.spotify.com/track/3gLNrBvicuPFGZyLPrOJbz?si=4f6de239319647eb"}], "modalTitle":"More from the Foggy Mountain Boys"}
+    ], "listening_poll": {"q": "Listen to the clips below. Which one best demonstrates the 'Lester Flatt G Run'?", "clips": ["Clip 1 (Banjo Breakdown)", "Clip 2 (G Run Example)", "Clip 3 (Mandolin Solo)"], "choices": ["Clip 1", "Clip 2", "Clip 3"], "answer": 1}},
+    {"id": "17.06", "title": "17.06 Bluegrass and the Folk Music Revival", "bullets": ["The 1960s folk revival embraced bluegrass as 'authentic' music.", "Flatt and Scruggs' popularity surged, leading to performances at festivals and Carnegie Hall.", "'The Ballad of Jed Clampett' became the theme song for *The Beverly Hillbillies*.", "'Foggy Mountain Breakdown' was featured in the 1967 film *Bonnie and Clyde*."], "full": "As we will see in the next lesson, the 1950s and 1960s saw a massive revival of folk music and folk music genres. Bluegrass was suddenly embraced as an 'authentic' type of music that had not been marred by commercial interests... 'The Ballad of Jed Clampett' was composed and performed for The Beverly Hillbillies television show... Their 'Foggy Mountain Breakdown' appeared in the 1967 film Bonnie and Clyde, and this Hollywood exposure led to a resurgence of interest in recordings by the group that were over two decades old.", "deep": [
+      {"title": "Ralph Stanley", "summary": "Along with his brother Carter, Ralph Stanley was a major figure in the first generation of bluegrass artists who followed Bill Monroe.", "bullets": [], "media": [{"label": "Watch: A Conversation with Ralph Stanley", "href": "https://www.youtube.com/embed/2xmRWj7gJEU"}], "image": "https://i.imgur.com/g7v0lFT.png", "modalTitle": "About Ralph Stanley", "modalHTML": ""}
+    ]},
+    {"id": "17.07", "title": "17.07 Conclusion", "bullets": ["Bill Monroe combined religious, blues, and hillbilly music to create bluegrass.", "The classic Blue Grass Boys lineup set the standard for the genre.", "Interest in bluegrass was renewed during the 1960s folk revival."], "full": "In the 1930s and early 1940s, Bill Monroe combined his experiences in and knowledge of religious music, blues, and hillbilly music to develop a new genre of music, one that would eventually bear the name of his band, the Blue Grass Boys. With Earl Scruggs on banjo and Lester Flatt on guitar, Bill Monroe's Blue Grass Boys ushered in the genre of bluegrass music, inspiring many imitators. Scruggs and Flatt left Monroe's group in the late 1940s to start their own group, the Foggy Mountain Boys. While none of these artists ever stopped playing, interest in their music was renewed during the folk revival movement of the 1960s.", "deep":[], "wordcloud": true}
+  ];
+  const QUIZ = [
+      {"q": "In what year did Bill Monroe's Blue Grass Boys earn a regular spot on the Grand Ole Opry?", "choices": ["1943", "1947", "1935", "1939"], "answer": 3},
+      {"q": "The Flatt and Scruggs song 'The Ballad of Jed Clampett' was the theme for what TV show?", "choices": ["Bonanza", "Green Acres", "The Beverly Hillbillies", "Mr. Ed"], "answer": 2},
+      {"q": "The classic, genre-defining version of Bill Monroe's Blue Grass Boys existed from:", "choices": ["1930-1933", "1945-1948", "1935-1938", "1940-1943"], "answer": 1},
+      {"q": "Bill Monroe was influenced by all of the following EXCEPT:", "choices": ["The blues", "Hillbilly fiddling", "Thumb-and-finger style guitar", "Ragtime"], "answer": 3},
+      {"q": "Which of these songs was an original composition by Bill Monroe?", "choices": ["'Skillet Licker Breakdown'", "'Blue Yodel No.4'", "'Mule Skinner Blues'", "'Blue Moon of Kentucky'"], "answer": 3},
+      {"q": "Most of the singing in the classic Blue Grass Boys was performed by:", "choices": ["Earl Scruggs and Lester Flatt", "Cedric Rainwater and Lester Flatt", "Earl Scruggs and Cedric Rainwater", "Bill Monroe and Lester Flatt"], "answer": 3},
+      {"q": "What technique is heard in the recording 'Earl's Breakdown'?", "media": "https://open.spotify.com/track/1TE5fjEZttPqAtPsTLK8vv?si=4e69ca1fe6f44523", "choices": ["Yodeling", "Clawhammer", "Peg tuning", "Blue notes"], "answer": 2},
+      {"q": "True or False: A 'breakdown' in bluegrass contains no lyrics.", "choices": ["True", "False"], "answer": 0},
+      {"q": "True or False: Chubby Wise was the fiddler for the classic Blue Grass Boys.", "choices": ["True", "False"], "answer": 0},
+      {"q": "True or False: Lester Flatt invented the G run.", "choices": ["True", "False"], "answer": 0}
+  ];
+  const EXTRA = {
+    'Lester Flatt (1914-1979)': [], 'Bill Monroe (1911-1996)': [], 'Earl Scruggs (1924-2012)': [],
+    'Gid Tanner & the Skillet Lickers': [], 'Blue Moon of Kentucky': [], 'Foggy Mountain Breakdown': [],
+    'Lester Flatt G Run': [], 'Ralph Stanley': [], 'Overview Video': []
+  };
+
+  // --- AUTHENTICATION & INITIALIZATION ---
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        userId = user.uid;
+        console.log("Firebase Authenticated. User ID:", userId);
+        checkSessionState();
+    } else {
+        try {
+            if (initialAuthToken) { await signInWithCustomToken(auth, initialAuthToken); }
+            else { await signInAnonymously(auth); }
+        } catch (error) { console.error("Firebase authentication failed:", error); }
+    }
+  });
+  
+  function initializeInteractiveFeatures(){
+    if(!sessionId) return;
+    sessionDataPath = `/artifacts/${appId}/public/data/sessions/${sessionId}`;
+    setupQuizBattleListener();
+    setupPollListeners();
+    setupWordCloudListener();
+    setupQnaListener();
+  }
+  
+  function showApp(){
+      document.getElementById('session-overlay').classList.add('hidden');
+      document.getElementById('name-entry-overlay').classList.add('hidden');
+      document.getElementById('main-header').style.display = 'block';
+      document.getElementById('main-content').style.display = 'block';
+      document.getElementById('qna-fab').style.display = 'block';
+  }
+
+  // --- USER SESSION ---
+   function initializeUserSession() {
+    const startBtn = document.getElementById('start-session-btn');
+    const joinBtn = document.getElementById('join-session-btn');
+    
+    startBtn.addEventListener('click', () => {
+        const newSessionId = Math.floor(100000 + Math.random() * 900000).toString();
+        const currentUrl = new URL(window.location.origin + window.location.pathname);
+        currentUrl.searchParams.set('session', newSessionId);
+        window.location.href = currentUrl.href;
+    });
+
+    joinBtn.addEventListener('click', () => {
+        const sessionInput = document.getElementById('session-input');
+        const inputId = sessionInput.value.trim();
+        if (inputId) {
+            const currentUrl = new URL(window.location.origin + window.location.pathname);
+            currentUrl.searchParams.set('session', inputId);
+            window.location.href = currentUrl.href;
+        }
+    });
+
+    const nameInput = document.getElementById('name-input');
+    const joinNameBtn = document.getElementById('join-btn');
+    const anonBtn = document.getElementById('join-anonymously');
+
+    function joinWithName(name) {
+        if (!name || !sessionId) return;
+        userName = name;
+        localStorage.setItem(`lesson17_userName_${sessionId}`, name);
+        startApp();
+    };
+
+    joinNameBtn.addEventListener('click', () => { if (nameInput.value.trim()) { joinWithName(nameInput.value.trim()); } });
+    nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && nameInput.value.trim()) { joinWithName(nameInput.value.trim()); } });
+    anonBtn.addEventListener('click', (e) => { e.preventDefault(); joinWithName(`Student${Math.floor(1000 + Math.random() * 9000)}`); });
+  }
+  
+   function checkSessionState() {
+    const sessionOverlay = document.getElementById('session-overlay');
+    const nameOverlay = document.getElementById('name-entry-overlay');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    sessionId = urlParams.get('session');
+
+    if (sessionId) {
+        sessionOverlay.classList.add('hidden');
+        document.getElementById('session-id-display').textContent = sessionId;
+        
+        const storedName = localStorage.getItem(`lesson17_userName_${sessionId}`);
+        if (storedName) {
+            userName = storedName;
+            startApp();
+        } else {
+            nameOverlay.classList.remove('hidden');
+        }
+    } else {
+        sessionOverlay.classList.remove('hidden');
+    }
+}
+
+function startApp() {
+    if (!userId || !sessionId || !userName) {
+        console.error("Cannot start app, missing user, session, or name info", {userId, sessionId, userName});
+        return;
+    }
+    
+    document.getElementById('session-overlay').classList.add('hidden');
+    document.getElementById('name-entry-overlay').classList.add('hidden');
+    
+    showApp();
+    initializeInteractiveFeatures();
+}
+
+  // --- INTERACTIVE FEATURES ---
+
+  // Polls
+  function setupPollListeners() {
+    document.querySelectorAll('.poll').forEach(pollEl => {
+        const pollId = pollEl.dataset.pollId;
+        if (pollId) {
+            const votesRef = collection(db, `${sessionDataPath}/polls/${pollId}/votes`);
+            onSnapshot(query(votesRef), (snapshot) => {
+                const votes = {}; let totalVotes = 0; let userVote = -1;
+                snapshot.forEach(doc => {
+                    const vote = doc.data().choice;
+                    votes[vote] = (votes[vote] || 0) + 1;
+                    totalVotes++;
+                    if (doc.id === userId) userVote = vote;
+                });
+                renderPollResults(pollId, votes, totalVotes, userVote);
+            });
+        }
+    });
+  }
+
+  function renderPollResults(pollId, votes, totalVotes, userVote) {
+    const pollEl = document.querySelector(`[data-poll-id="${pollId}"]`);
+    if (!pollEl) return;
+    pollEl.querySelectorAll('.poll-option').forEach((optionEl, index) => {
+        const voteCount = votes[index] || 0;
+        const percentage = totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
+        optionEl.querySelector('.poll-bar').style.width = `${percentage}%`;
+        optionEl.querySelector('.poll-percent').textContent = `${Math.round(percentage)}%`;
+        const button = optionEl.querySelector('button');
+        button.disabled = false;
+        optionEl.classList.remove('voted-for');
+        if (userVote !== -1) {
+            button.disabled = true;
+            if (index === userVote) optionEl.classList.add('voted-for');
+        }
+    });
+  }
+
+  async function submitPollVote(pollId, choiceIndex) {
+      if (!userId) return;
+      const voteRef = doc(db, `${sessionDataPath}/polls/${pollId}/votes/${userId}`);
+      await setDoc(voteRef, { choice: choiceIndex });
+  };
+  
+  // Word Cloud
+  function setupWordCloudListener() {
+    const wordsRef = collection(db, `${sessionDataPath}/wordcloud/words`);
+    onSnapshot(query(wordsRef), (snapshot) => {
+        const words = {};
+        snapshot.forEach(doc => {
+            const word = doc.data().text.toLowerCase().trim();
+            words[word] = (words[word] || 0) + 1;
+        });
+        renderWordCloud(words);
+    });
+  }
+
+  function renderWordCloud(words) {
+    const display = document.getElementById('word-cloud-display');
+    if (!display) return;
+    display.innerHTML = '';
+    const maxFreq = Math.max(...Object.values(words), 1);
+    const sortedWords = Object.keys(words).sort((a,b) => words[b] - words[a]);
+    sortedWords.forEach(word => {
+        const freq = words[word];
+        const span = document.createElement('span');
+        span.textContent = word;
+        const size = 1 + (freq / maxFreq) * 2;
+        span.style.fontSize = `${size}em`;
+        span.style.opacity = 0.6 + (freq / maxFreq) * 0.4;
+        display.appendChild(span);
+    });
+  }
+
+  async function submitWord() {
+    const input = document.getElementById('word-cloud-input');
+    const text = input.value.trim();
+    if (text && userId) {
+        await addDoc(collection(db, `${sessionDataPath}/wordcloud/words`), { text, author: userId });
+        input.value = '';
+    }
+  };
+
+  // Q&A
+  function setupQnaListener() {
+    const qnaRef = collection(db, `${sessionDataPath}/qna/questions`);
+    onSnapshot(query(qnaRef), (snapshot) => {
+        const questions = [];
+        snapshot.forEach(doc => questions.push({ id: doc.id, ...doc.data() }));
+        questions.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+        renderQna(questions);
+    });
+  }
+
+  function renderQna(questions) {
+    const list = document.getElementById('qna-list');
+    if (!list) return;
+    list.innerHTML = questions.length ? '' : '<li>No questions yet. Be the first!</li>';
+    questions.forEach(q => {
+        const hasVoted = localUpvotes.has(q.id);
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <button class="upvote-btn ${hasVoted ? 'voted' : ''}" onclick="upvoteQuestion('${q.id}')" ${hasVoted ? 'disabled' : ''}>
+                <span>▲</span>
+                <span>${q.upvotes || 0}</span>
+            </button>
+            <div>
+                <p>${q.text}</p>
+                <small style="color:var(--muted)">asked by ${q.name || `...${q.author.slice(-4)}`}</small>
+            </div>
+        `;
+        list.appendChild(li);
+    });
+  }
+  
+  async function submitQuestion() {
+    const input = document.getElementById('qna-input');
+    const text = input.value.trim();
+    if (text && userId) {
+        await addDoc(collection(db, `${sessionDataPath}/qna/questions`), { text, author: userId, upvotes: 0, name: userName || 'Anonymous' });
+        input.value = '';
+    }
+  };
+
+  async function upvoteQuestion(questionId) {
+    if (localUpvotes.has(questionId)) return;
+    localUpvotes.add(questionId);
+    const qRef = doc(db, `${sessionDataPath}/qna/questions/${questionId}`);
+    await updateDoc(qRef, { upvotes: increment(1) });
+  };
+  
+  // Quiz Battle
+  const BATTLE_QUIZ = QUIZ;
+  let localAnswers = {}; 
+  let timerInterval = null;
+
+  async function setupQuizBattleListener() {
+    const battleStateRef = doc(db, `${sessionDataPath}/quiz/battle`);
+    onSnapshot(battleStateRef, (docSnap) => {
+      const state = docSnap.exists() ? docSnap.data() : { status: 'waiting', currentQuestion: -1 };
+      renderQuizState(state);
+    });
+    const scoresRef = collection(db, `${sessionDataPath}/quiz/scores`);
+    onSnapshot(query(scoresRef), (snapshot) => {
+      const scores = [];
+      snapshot.forEach(doc => scores.push({ id: doc.id, ...doc.data() }));
+      scores.sort((a, b) => (b.timePoints || 0) - (a.timePoints || 0) || (b.correctAnswers || 0) - (a.correctAnswers || 0));
+      renderLeaderboard(scores);
+    });
+  }
+
+  function renderLeaderboard(scores) {
+      const list = document.getElementById('leaderboard-list');
+      if (!list) return;
+      list.innerHTML = scores.length ? '' : '<li>No scores yet!</li>';
+      scores.forEach(player => {
+          list.innerHTML += `<li><div><span class="player-name">${player.name || `Player ...${player.id.slice(-4)}`}</span><span class="correct-answers"> (${player.correctAnswers || 0}/${BATTLE_QUIZ.length})</span></div><span class="score">${player.timePoints || 0} pts</span></li>`;
+      });
+  }
+
+  function renderQuizState(state) {
+    const questionArea = document.getElementById('quiz-question-area'), controlsArea = document.getElementById('quiz-controls'), feedbackArea = document.getElementById('quiz-feedback'), timerArea = document.getElementById('quiz-timer');
+    if (!questionArea || !controlsArea || !feedbackArea || !timerArea) return;
+    clearInterval(timerInterval);
+    if (state.status === 'waiting' || state.currentQuestion === -1) {
+      questionArea.innerHTML = '<p>The quiz battle is about to begin!</p>';
+      controlsArea.innerHTML = `<button class="grade-btn" onclick="startOrAdvanceQuiz()">Start Quiz Battle</button>`;
+      feedbackArea.innerHTML = ''; timerArea.style.display = 'none';
+    } else if (state.status === 'finished') {
+      questionArea.innerHTML = '<h3>Quiz Battle Over!</h3><p>Check the final scores.</p>';
+      controlsArea.innerHTML = `<button class="grade-btn" onclick="startOrAdvanceQuiz()">Play Again?</button>`;
+      feedbackArea.innerHTML = ''; timerArea.style.display = 'none';
+    } else {
+      timerArea.style.display = 'block';
+      const qIndex = state.currentQuestion, question = BATTLE_QUIZ[qIndex];
+      const media = question.media ? `<p class="media"><a href="${question.media}" target="_blank" rel="noopener">Open media</a></p>` : '';
+      const choices = question.choices.map((opt, ci) => `<button id="choice-${ci}" class="choice-btn" onclick="submitQuizAnswer(${qIndex}, ${ci}, ${state.questionStartTime})">${opt}</button>`).join('');
+      questionArea.innerHTML = `<div class="q"><h4>Q${qIndex + 1}. ${question.q}</h4>${media}<div class="choices">${choices}</div></div>`;
+      controlsArea.innerHTML = `<button class="grade-btn" onclick="startOrAdvanceQuiz()">Next Question</button>`;
+      feedbackArea.innerHTML = '';
+      const startTime = state.questionStartTime;
+      timerInterval = setInterval(() => {
+          const elapsedSeconds = (new Date().getTime() - startTime) / 1000;
+          if (elapsedSeconds >= 15) {
+              timerArea.textContent = '0 points';
+              clearInterval(timerInterval);
+              if (localAnswers[qIndex] === undefined) {
+                  document.querySelectorAll('.choice-btn').forEach(btn => btn.disabled = true);
+                  const correctBtn = document.getElementById(`choice-${question.answer}`);
+                  if (correctBtn) correctBtn.classList.add('correct');
+                  if (feedbackArea) feedbackArea.textContent = "Time's up!";
+              }
+          } else {
+              timerArea.textContent = `${Math.round(1000 * (1 - (elapsedSeconds / 15)))} points`;
+          }
+      }, 100);
+      if(localAnswers[qIndex] !== undefined) {
+          clearInterval(timerInterval);
+          showAnswerFeedback(qIndex, localAnswers[qIndex]);
+      }
+    }
+  }
+
+  async function startOrAdvanceQuiz() {
+    if (!userId || !userName) return;
+    const battleStateRef = doc(db, `${sessionDataPath}/quiz/battle`);
+    const docSnap = await getDoc(battleStateRef);
+    const currentState = docSnap.exists() ? docSnap.data() : { status: 'waiting', currentQuestion: -1 };
+    let nextQuestion = currentState.currentQuestion + 1;
+    if (currentState.status === 'finished' || currentState.status === 'waiting') {
+        localAnswers = {};
+        const scoresRef = doc(db, `${sessionDataPath}/quiz/scores/${userId}`);
+        await setDoc(scoresRef, { correctAnswers: 0, timePoints: 0, name: userName || 'Anonymous' });
+        nextQuestion = 0;
+    }
+    if (nextQuestion >= BATTLE_QUIZ.length) {
+        await setDoc(battleStateRef, { status: 'finished', currentQuestion: -1 });
+    } else {
+        await setDoc(battleStateRef, { status: 'in_progress', currentQuestion: nextQuestion, questionStartTime: new Date().getTime() });
+    }
+  };
+
+  async function submitQuizAnswer(qIndex, choiceIndex, questionStartTime) {
+      if (localAnswers[qIndex] !== undefined) return;
+      localAnswers[qIndex] = choiceIndex;
+      clearInterval(timerInterval);
+      const question = BATTLE_QUIZ[qIndex], isCorrect = question.answer === choiceIndex;
+      showAnswerFeedback(qIndex, choiceIndex);
+      if (isCorrect) {
+          const elapsedSeconds = (new Date().getTime() - startTime) / 1000;
+          let points = (elapsedSeconds < 15) ? Math.round(1000 * (1 - (elapsedSeconds / 15))) : 0;
+          const scoreRef = doc(db, `${sessionDataPath}/quiz/scores/${userId}`);
+          await setDoc(scoreRef, { correctAnswers: increment(1), timePoints: increment(points) }, { merge: true });
+      }
+  };
+
+  function showAnswerFeedback(qIndex, choiceIndex) {
+      const question = BATTLE_QUIZ[qIndex], isCorrect = question.answer === choiceIndex, feedbackArea = document.getElementById('quiz-feedback');
+      document.querySelectorAll('.choice-btn').forEach(btn => btn.disabled = true);
+      const chosenBtn = document.getElementById(`choice-${choiceIndex}`), correctBtn = document.getElementById(`choice-${question.answer}`);
+      if (isCorrect) {
+          chosenBtn.classList.add('correct');
+          if (feedbackArea) { feedbackArea.textContent = 'Correct!'; feedbackArea.style.color = 'var(--brand)'; }
+      } else {
+          chosenBtn.classList.add('incorrect');
+          correctBtn.classList.add('correct');
+          if (feedbackArea) { feedbackArea.textContent = 'Incorrect!'; feedbackArea.style.color = 'rgb(239, 71, 111)';}
+      }
+  }
+  
+  // --- RENDERING & DOM MANIPULATION ---
+  function deepListHTML(sectionIdx, deep){
+    if(!deep || !deep.length) return '';
+    const items = deep.map((d,di)=>{
+      const label = `Open profile: ${d.title}`;
+      return `<li class="deep-item"><button type="button" class="profile-btn" aria-label="${label}" onclick="openProfile(${sectionIdx},${di})">${d.title}</button></li>`;
+    }).join('');
+    return `<ul class="deep-list">${items}</ul>`;
+  }
+  
+  function pollHTML(check, slideId, isListeningPoll = false) {
+    if (!check) return '';
+    const pollId = `poll-${slideId}`;
+    const choices = check.choices.map((opt, ci) => `
+        <div class="poll-option">
+            <div class="poll-bar"></div>
+            <span class="poll-percent">0%</span>
+            <button onclick="submitPollVote('${pollId}', ${ci})">${opt}</button>
+        </div>
+    `).join('');
+    let clipsHTML = '';
+    if (isListeningPoll && check.clips) {
+      clipsHTML = check.clips.map(clip => `<button class="read-btn" style="margin-right: .5rem;">▶️ ${clip}</button>`).join('');
+    }
+    return `
+        <div class="poll interactive-section" data-poll-id="${pollId}">
+            <h3>${isListeningPoll ? 'Identify the Technique' : 'Test Your Knowledge'}</h3>
+            <p>${check.q}</p>
+            ${isListeningPoll ? `<div style="margin-bottom:1rem">${clipsHTML}</div>` : ''}
+            <div class="choices">${choices}</div>
+        </div>
+    `;
+  }
+
+  function buildABandHTML(data) {
+    if (!data) return '';
+    const instruments = [...data.correct, ...data.distractors].sort(() => Math.random() - 0.5);
+    const instrumentHTML = instruments.map(inst => `<div class="instrument" draggable="true" data-instrument="${inst}">${inst}</div>`).join('');
+    return `
+        <div class="interactive-section build-a-band-container">
+            <h3>Build a String Band</h3>
+            <p>Drag the correct instruments into the band area.</p>
+            <div class="build-a-band">
+                <div class="instrument-pool"><h4>Instruments</h4>${instrumentHTML}</div>
+                <div class="band-area" data-correct='${JSON.stringify(data.correct)}'><h4>Band Area</h4></div>
+            </div>
+        </div>
+    `;
+  }
+
+  function wordCloudHTML() {
+    return `
+        <div class="interactive-section word-cloud-container">
+            <div class="word-cloud-input">
+                <h3>Final Thoughts?</h3>
+                <p>What one word describes Bluegrass to you? Add it to our word cloud!</p>
+                <div class="content-input-container">
+                    <input type="text" id="word-cloud-input" class="content-input" placeholder="e.g., Fast, Twangy, etc.">
+                    <button class="add-content-btn" onclick="submitWord()">Submit</button>
+                </div>
+            </div>
+            <div id="word-cloud-display" class="word-cloud-display"></div>
+        </div>
+    `;
+  }
+
+  function render(){
+    const host = document.getElementById('slides');
+    const total = SLIDES.length + 1;
+    SLIDES.forEach((s,idx)=>{
+      const bullets = s.bullets.map(b=>`<li>${b}</li>`).join('');
+      const deep = deepListHTML(idx, s.deep);
+      const poll = pollHTML(s.poll, s.id);
+      const listeningPoll = pollHTML(s.listening_poll, s.id + '-listen', true);
+      const buildaband = buildABandHTML(s.buildaband);
+      const wordcloud = s.wordcloud ? wordCloudHTML() : '';
+      host.insertAdjacentHTML('beforeend', `
+        <section class="slide" id="slide-${idx}" data-ix="${idx}" aria-labelledby="h-${s.id}">
+          <header class="slide-head"><h2 id="h-${s.id}">${s.title}</h2><div class="meter">Slide ${idx+1} of ${total}</div></header>
+          <ul class="bullets">${bullets}</ul>
+          <button class="read-btn" onclick="toggleFull(${idx})">Read Full Text</button>
+          <article id="full-${idx}" class="full" hidden><p>${s.full}</p></article>
+          ${deep}
+          ${poll}
+          ${listeningPoll}
+          ${buildaband}
+          ${wordcloud}
+          <footer class="slide-nav">${idx>0?`<button class="nav-btn" onclick="go(${idx-1})">◀ Previous</button>`:'<span></span>'}<button class="home-btn" onclick="go(0)">Home</button>${idx<SLIDES.length?`<button class="nav-btn" onclick="go(${idx+1})">Next ▶</button>`:'<span></span>'}</footer>
+        </section>
+      `);
+    });
+    const qIndex = SLIDES.length;
+    host.insertAdjacentHTML('beforeend', `
+      <section class="slide" id="slide-${qIndex}" data-ix="${qIndex}" aria-labelledby="h-quiz">
+        <header class="slide-head"><h2 id="h-quiz">Lesson 17: Quiz Battle</h2><div class="meter">Slide ${qIndex + 1} of ${qIndex + 1}</div></header>
+        <div class="quiz-battle-container">
+          <div class="quiz-main">
+            <div id="quiz-timer">1000 points</div>
+            <div id="quiz-question-area"><p>Loading Quiz Battle...</p></div>
+            <div id="quiz-feedback"></div>
+            <div id="quiz-controls"></div>
+          </div>
+          <div class="leaderboard">
+            <h3>Leaderboard</h3>
+            <ul id="leaderboard-list">
+              <li>Loading...</li>
+            </ul>
+          </div>
+        </div>
+        <footer class="slide-nav"><button class="nav-btn" onclick="go(${qIndex-1})">◀ Previous</button><button class="home-btn" onclick="go(0)">Home</button><span></span></footer>
+      </section>
+    `);
+    setupDragAndDrop();
+  }
+
+  let lastFocused = null;
+  function openProfile(sectionIdx, cardIdx){
+    const d = SLIDES[sectionIdx].deep[cardIdx];
+    const modal = document.getElementById('modal');
+    const mBody = document.getElementById('m-body');
+    const scrim = document.getElementById('scrim');
+    const title = d.modalTitle || d.title;
+    const baseBullets = (d.bullets||[]).map(b=>`<li>${b}</li>`).join('');
+    const media = (d.media||[]).map(m=>`<li><a href="${m.href}" target="_blank" rel="noopener">${m.label}</a></li>`).join('');
+    const extended = d.modalHTML || '';
+    const extra = EXTRA[d.title] || [];
+    const extraHTML = extra.length ? `<h4>Additional notes</h4><ul>${extra.map(x=>`<li>${x}</li>`).join('')}</ul>` : '';
+    const summaryHTML = d.summary?`<p>${d.summary}</p>`:'';
+    const bulletsHTML = baseBullets?`<h4>Key points</h4><ul>${baseBullets}</ul>`:'';
+    const mediaHTML = media?`<h4>Media</h4><ul class="media">${media}</ul>`:'';
+    document.getElementById('m-title').textContent = title;
+    if (d.image) {
+        mBody.className = 'modal-body split-layout';
+        mBody.innerHTML = `<div class="modal-image-container"><img alt="${d.title}" src="${d.image}"></div><div class="modal-text-container">${summaryHTML}${bulletsHTML}${extraHTML}${mediaHTML}${extended}</div>`;
+    } else {
+        mBody.className = 'modal-body';
+        mBody.innerHTML = `${summaryHTML}${bulletsHTML}${extraHTML}${mediaHTML}${extended}`;
+    }
+    lastFocused = document.activeElement;
+    document.body.classList.add('modal-open');
+    scrim.classList.add('active');
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden','false');
+    document.getElementById('modalClose').focus();
+  }
+  function hideModal(){
+    const modal = document.getElementById('modal');
+    const scrim = document.getElementById('scrim');
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden','true');
+    scrim.classList.remove('active');
+    document.body.classList.remove('modal-open');
+    if(lastFocused) lastFocused.focus();
+  }
+ 
+  function show(i){ if(!slidesEls) slidesEls = document.getElementsByClassName('slide'); if(i<0||i>=slidesEls.length) return; Array.from(slidesEls).forEach(s=>s.style.display='none'); slidesEls[i].style.display='block'; ix=i; window.scrollTo(0,0); }
+  function go(i){ show(i); }
+  function toggleFull(i){ const el=document.getElementById('full-'+i); if(el) el.hidden=!el.hidden; }
+  
+  function setupDragAndDrop() {
+    const instruments = document.querySelectorAll('.instrument');
+    const dropzone = document.querySelector('.band-area');
+
+    instruments.forEach(inst => {
+        inst.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', e.target.dataset.instrument));
+    });
+    if (!dropzone) return;
+    const correctInstruments = JSON.parse(dropzone.dataset.correct);
+
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+    dropzone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropzone.classList.remove('drag-over');
+        const instrumentName = e.dataTransfer.getData('text/plain');
+        const instrumentEl = document.querySelector(`[data-instrument="${instrumentName}"]`);
+        if (instrumentEl && !dropzone.contains(instrumentEl)) {
+            dropzone.appendChild(instrumentEl);
+            if (correctInstruments.includes(instrumentName)) {
+                instrumentEl.classList.add('correct');
+            } else {
+                instrumentEl.classList.add('incorrect');
+            }
+        }
+    });
+  }
+  
+  function toggleQnaPanel() {
+    const nameOverlay = document.getElementById('name-entry-overlay');
+    if(document.getElementById('session-overlay').classList.contains('hidden') && nameOverlay.classList.contains('hidden')){
+      document.getElementById('qna-panel').classList.toggle('active');
+      document.getElementById('scrim').classList.toggle('active');
+    }
+  }
+
+  // --- GLOBAL EVENT LISTENERS ---
+  document.getElementById('modalClose').addEventListener('click', hideModal);
+  document.getElementById('scrim').addEventListener('click', ()=>{
+      hideModal();
+      if(document.getElementById('qna-panel').classList.contains('active')){
+          toggleQnaPanel();
+      }
+  });
+  document.addEventListener('keydown', (e)=>{ 
+    if(e.key==='Escape') {
+        hideModal();
+        if(document.getElementById('qna-panel').classList.contains('active')){
+          toggleQnaPanel();
+        }
+    }
+    else if(e.key==='ArrowRight') go(ix+1); 
+    else if(e.key==='ArrowLeft') go(ix-1); 
+    else if(e.key==='Home') go(0); 
+    else if(e.key==='End') go(document.getElementsByClassName('slide').length-1); 
+  });
+  document.addEventListener('DOMContentLoaded', ()=>{ 
+    render(); 
+    show(0); 
+    initializeUserSession();
+  });
+  
+  // --- WINDOW-SCOPED FUNCTIONS FOR HTML ---
+  window.go = go;
+  window.toggleFull = toggleFull;
+  window.openProfile = openProfile;
+  window.submitPollVote = submitPollVote;
+  window.submitWord = submitWord;
+  window.startOrAdvanceQuiz = startOrAdvanceQuiz;
+  window.submitQuizAnswer = submitQuizAnswer;
+  window.toggleQnaPanel = toggleQnaPanel;
+  window.submitQuestion = submitQuestion;
+  window.upvoteQuestion = upvoteQuestion;
+  
+
+</script>
+
+</body>
+</html>
+
